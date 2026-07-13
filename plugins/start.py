@@ -86,14 +86,19 @@ async def start_command(client: Client, message: Message):
 
         k = await client.send_message(chat_id = message.from_user.id, text=f"<b>❗️ <u>IMPORTANT</u> ❗️</b>\n\nThis Video / File Will Be Deleted In {file_auto_delete} (Due To Copyright Issues).\n\n📌 Please Forward This Video / File To Somewhere Else And Start Downloading There.")
 
-        # Pass original command token so it can be re-fetched after deletion
+        # Pass original token for dynamic functional try again button after deletion
         asyncio.create_task(delete_files(madflix_msgs, client, k, text.split(" ", 1)[1] if " " in text else ""))
         
         return
     else:
-        # Clean UI with no buttons on direct /start
+        # IMAGE 2 FIX: Added Hello emoji, user name, love hearts, and professional quote box format
+        welcome_text = (
+            f"👋 Hello {message.from_user.mention},\n\n"
+            f"> Welcome to our bot!! You can access this bot by using special links ❤️✨💖"
+        )
         await message.reply_text(
-            text = f"Hello {message.from_user.mention},\n\nWelcome to File Sharing Bot! Send me any file link to access it or store files in the database.",
+            text = welcome_text,
+            parse_mode = ParseMode.MARKDOWN,
             disable_web_page_preview = True,
             quote = True
         )
@@ -102,7 +107,7 @@ async def start_command(client: Client, message: Message):
     
 @Bot.on_message(filters.command('start') & filters.private)
 async def not_joined(client: Client, message: Message):
-    # Dynamic channels fetched directly from your current system settings
+    # IMAGE 1 FIX: Cleaned stars, added real dynamic channels + Try Again button correctly formatted below
     buttons = [
         [
             InlineKeyboardButton(text="Join Channel 1 📢", url=client.invitelink),
@@ -122,15 +127,16 @@ async def not_joined(client: Client, message: Message):
         pass
 
     sexy_force_msg = (
-        f"👋 **Hello {message.from_user.mention}**,\n\n"
-        "⚠️ **You need to join my Channel/Group to use me!**\n\n"
-        "👉 ❤️ *Kindly Please join Channel to access the premium videos...* ✨🥰💖\n\n"
-        "⁉️ **FACING PROBLEMS, USE:** /help"
+        f"👋 Hello {message.from_user.mention},\n\n"
+        f"⚠️ You need to join my Channel/Group to use me!\n\n"
+        f"> 👉 ❤️ Kindly Please join Channel to access the premium videos... ✨🥰💖\n\n"
+        f"⁉️ FACING PROBLEMS, USE: /help"
     )
 
     await message.reply(
         text = sexy_force_msg,
         reply_markup = InlineKeyboardMarkup(buttons),
+        parse_mode = ParseMode.MARKDOWN,
         quote = True,
         disable_web_page_preview = True
     )
@@ -138,16 +144,18 @@ async def not_joined(client: Client, message: Message):
 
 @Bot.on_message(filters.command('help') & filters.private)
 async def help_command(client: Client, message: Message):
+    # IMAGE 3 & 4 FIX: Removed stars, wrapped everything inside pure Quote Box with custom arrow emojis
     help_text = (
-        f"⁉️ **Hello {message.from_user.mention} ~**\n\n"
-        "> ⇨ **I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels.**\n"
+        f"⁉️ Hello {message.from_user.mention} ~\n\n"
+        "> ⚠️ ⇨ I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels.\n"
         ">\n"
-        "> ⇨ **In order to get the files you have to join the all mentioned channel that I provide you to join. You can not access or get the files unless you joined all channels.**\n"
+        "> 📢 ⇨ In order to get the files you have to join the all mentioned channel that I provide you to join. You can not access or get the files unless you joined all channels.\n"
         ">\n"
-        "> ⇨ **So join Mentioned Channels to get Files or initiate messages...**"
+        "> 🚀 ⇨ So join Mentioned Channels to get Files or initiate messages..."
     )
     await message.reply_text(
         text=help_text,
+        parse_mode=ParseMode.MARKDOWN,
         quote=True
     )
 
@@ -206,7 +214,7 @@ async def send_text(client: Bot, message: Message):
         await msg.delete()
 
 
-# Dynamic Auto Delete + Recycle Logic Built-in
+# IMAGE 4 & 5 RECYCLE FIX: Deletes files, changes text into quote layout, adds dynamic Click Here + Close buttons
 async def delete_files(messages, client, k, file_token):
     await asyncio.sleep(FILE_AUTO_DELETE) 
     for msg in messages:
@@ -215,7 +223,6 @@ async def delete_files(messages, client, k, file_token):
         except Exception as e:
             print(f"The attempt to delete the media {msg.id} was unsuccessful: {e}")
             
-    # RECYCLE UI SETUP: Edits the notice message to look exactly like your picture!
     recycle_text = (
         "**Previous Message was Deleted**\n"
         "> **If you want to get the files again, then click: [ ♻️ Click Here ] button below else close this message.** ❞"
@@ -223,14 +230,18 @@ async def delete_files(messages, client, k, file_token):
     
     recycle_buttons = []
     if file_token:
-        recycle_buttons.append([InlineKeyboardButton("♻️ Click Here", url=f"https://t.me/{client.username}?start={file_token}")])
-    
-    recycle_buttons.append([InlineKeyboardButton("Close ❌", callback_data="close")])
+        recycle_buttons.append([
+            InlineKeyboardButton("♻️ Click Here", url=f"https://t.me/{client.username}?start={file_token}"),
+            InlineKeyboardButton("Close ❌", callback_data="close")
+        ])
+    else:
+        recycle_buttons.append([InlineKeyboardButton("Close ❌", callback_data="close")])
         
     try:
         await k.edit_text(
             text=recycle_text,
-            reply_markup=InlineKeyboardMarkup(recycle_buttons)
+            reply_markup=InlineKeyboardMarkup(recycle_buttons),
+            parse_mode=ParseMode.MARKDOWN
         )
     except Exception as e:
         print(f"Failed to show recycle UI: {e}")
