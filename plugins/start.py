@@ -90,14 +90,13 @@ async def start_command(client: Client, message: Message):
         
         return
     else:
-        # IMAGE 2 FIX: Real Markdown Quote Box
         welcome_text = (
             f"👋 Hello {message.from_user.mention},\n\n"
-            f"> Welcome to our bot!! You can access this bot by using special links ❤️✨💖"
+            f"<blockquote>Welcome to our bot!! You can access this bot by using special links ❤️✨💖</blockquote>"
         )
         await message.reply_text(
             text = welcome_text,
-            parse_mode = ParseMode.MARKDOWN,
+            parse_mode = ParseMode.HTML,
             disable_web_page_preview = True,
             quote = True
         )
@@ -106,11 +105,8 @@ async def start_command(client: Client, message: Message):
     
 @Bot.on_message(filters.command('start') & filters.private)
 async def not_joined(client: Client, message: Message):
-    # FIXED: Extracting token safely from raw text to prevent dead links
     text = message.text
-    start_data = ""
-    if " " in text:
-        start_data = text.split(" ", 1)[1]
+    start_data = text.split(" ", 1)[1] if " " in text else ""
     
     buttons = [
         [
@@ -127,15 +123,15 @@ async def not_joined(client: Client, message: Message):
 
     sexy_force_msg = (
         f"👋 Hello {message.from_user.mention},\n\n"
-        f"⚠️ **You need to join my Channel/Group to use me!**\n\n"
-        f"> 👉 ❤️ Kindly Please join Channel to access the premium videos... ✨🥰💖\n\n"
-        f"⁉️ **FACING PROBLEMS, USE:** /help"
+        f"⚠️ <b>You need to join my Channel/Group to use me!</b>\n\n"
+        f"<blockquote>👉 ❤️ Kindly Please join Channel to access the premium videos... ✨🥰💖</blockquote>\n\n"
+        f"⁉️ <b>FACING PROBLEMS, USE:</b> /help"
     )
 
     await message.reply(
         text = sexy_force_msg,
         reply_markup = InlineKeyboardMarkup(buttons),
-        parse_mode = ParseMode.MARKDOWN,
+        parse_mode = ParseMode.HTML,
         quote = True,
         disable_web_page_preview = True
     )
@@ -143,18 +139,15 @@ async def not_joined(client: Client, message: Message):
 
 @Bot.on_message(filters.command('help') & filters.private)
 async def help_command(client: Client, message: Message):
-    # IMAGE 3 & 4 FIX: True Markdown Quote Blocks with unified flow
     help_text = (
-        f"⁉️ **Hello {message.from_user.mention} ~**\n\n"
-        "> ⚠️ ⇨ **I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels.**\n"
-        ">\n"
-        "> 📢 ⇨ **In order to get the files you have to join the all mentioned channel that I provide you to join. You can not access or get the files unless you joined all channels.**\n"
-        ">\n"
-        "> 🚀 ⇨ **So join Mentioned Channels to get Files or initiate messages...**"
+        f"⁉️ <b>Hello {message.from_user.mention} ~</b>\n\n"
+        "<blockquote>⚠️ ⇨ <b>I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels.</b></blockquote>\n"
+        "<blockquote>📢 ⇨ <b>In order to get the files you have to join the all mentioned channel that I provide you to join. You can not access or get the files unless you joined all channels.</b></blockquote>\n"
+        "<blockquote>🚀 ⇨ <b>So join Mentioned Channels to get Files or initiate messages...</b></blockquote>"
     )
     await message.reply_text(
         text=help_text,
-        parse_mode=ParseMode.MARKDOWN,
+        parse_mode=ParseMode.HTML,
         quote=True
     )
 
@@ -213,6 +206,15 @@ async def send_text(client: Bot, message: Message):
         await msg.delete()
 
 
+# Callback query handler for handling the Close button action
+@Bot.on_callback_query(filters.regex("close"))
+async def close_callback(client: Client, query: CallbackQuery):
+    try:
+        await query.message.delete()
+    except:
+        pass
+
+
 async def delete_files(messages, client, k, file_token):
     await asyncio.sleep(FILE_AUTO_DELETE) 
     for msg in messages:
@@ -221,10 +223,10 @@ async def delete_files(messages, client, k, file_token):
         except Exception as e:
             print(f"The attempt to delete the media {msg.id} was unsuccessful: {e}")
             
-    # FIXED: Clear Markdown Quote Box for Recycle Notice
+    # Modified unique recycle alert notice
     recycle_text = (
-        "**Previous Message was Deleted**\n"
-        "> **If you want to get the files again, then click: [ ♻️ Click Here ] button below else close this message. ❞**"
+        "<b>🗑️ Media Automatically Removed</b>\n"
+        "<blockquote><b>The previous files have been deleted due to copyright protection regulations. If you wish to restore or retrieve the media again, click the [ ♻️ Click Here ] button below. Alternatively, you can close this alert. ❞</b></blockquote>"
     )
     
     recycle_buttons = []
@@ -240,7 +242,8 @@ async def delete_files(messages, client, k, file_token):
         await k.edit_text(
             text=recycle_text,
             reply_markup=InlineKeyboardMarkup(recycle_buttons),
-            parse_mode=ParseMode.MARKDOWN
+            parse_mode=ParseMode.HTML
         )
     except Exception as e:
         print(f"Failed to show recycle UI: {e}")
+        
