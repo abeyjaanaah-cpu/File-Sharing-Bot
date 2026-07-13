@@ -18,7 +18,7 @@ async def is_subscribed(filter, client, update):
                 return False
         except UserNotParticipant:
             return False
-        except:
+        except Exception:
             pass
 
     # Check Channel 2
@@ -29,7 +29,7 @@ async def is_subscribed(filter, client, update):
                 return False
         except UserNotParticipant:
             return False
-        except:
+        except Exception:
             pass
             
     return True
@@ -63,7 +63,7 @@ async def get_messages(client, message_ids):
                 chat_id=client.db_channel.id,
                 message_ids=temb_ids
             )
-        except:
+        except Exception:
             pass
         total_messages += len(temb_ids)
         messages.extend(msgs)
@@ -79,7 +79,7 @@ async def get_message_id(client, message):
         return 0
     elif message.text:
         pattern = "https://t.me/(?:c/)?(.*)/(\d+)"
-        matches = re.match(pattern,message.text)
+        matches = re.match(pattern, message.text)
         if not matches:
             return 0
         channel_id = matches.group(1)
@@ -90,8 +90,7 @@ async def get_message_id(client, message):
         else:
             if channel_id == client.db_channel.username:
                 return msg_id
-    else:
-        return 0
+    return 0
 
 def get_readable_time(seconds: int) -> str:
     count = 0
