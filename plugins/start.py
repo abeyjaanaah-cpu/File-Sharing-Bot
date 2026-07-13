@@ -90,7 +90,7 @@ async def start_command(client: Client, message: Message):
         
         return
     else:
-        # IMAGE 2 FIX: Gaps removed, strict HTML blockquote structure
+        # CLEAN FIX: HTML blockquote for welcome notice
         welcome_text = (
             f"👋 Hello {message.from_user.mention},\n\n"
             "<blockquote>Welcome to our bot!! You can access this bot by using special links ❤️✨💖</blockquote>"
@@ -113,6 +113,7 @@ async def not_joined(client: Client, message: Message):
     elif " " in text:
         start_data = text.split(" ", 1)[1]
     
+    bot_username = client.username if client.username else (await client.get_me()).username
     buttons = [
         [
             InlineKeyboardButton(text="Join Channel 1 📢", url=client.invitelink),
@@ -121,12 +122,12 @@ async def not_joined(client: Client, message: Message):
         [
             InlineKeyboardButton(
                 text='♻️ Try Again',
-                url=f"https://t.me/{client.username}?start={start_data}"
+                url=f"https://t.me/{bot_username}?start={start_data}"
             )
         ]
     ]
 
-    # IMAGE 1 FIX: Strictly parsing with clean blockquote layout
+    # CLEAN FIX: HTML blockquote container for Force Sub Box
     sexy_force_msg = (
         f"👋 Hello {message.from_user.mention},\n\n"
         "⚠️ <b>You need to join my Channel/Group to use me!</b>\n\n"
@@ -145,7 +146,7 @@ async def not_joined(client: Client, message: Message):
 
 @Bot.on_message(filters.command('help') & filters.private)
 async def help_command(client: Client, message: Message):
-    # IMAGES 3 & 4 FIX: HTML blockquote container for official Telegram quote card
+    # CLEAN FIX: HTML blockquote wrapper for official premium help box 
     help_text = (
         f"⁉️ <b>Hello {message.from_user.mention} ~</b>\n\n"
         "<blockquote>⚠️ ⇨ <b>I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels.</b><br><br>"
@@ -229,7 +230,7 @@ async def delete_files(messages, client, k, file_token):
         except Exception as e:
             print(f"The attempt to delete the media {msg.id} was unsuccessful: {e}")
             
-    # IMAGE 5 RECYCLE NOTICE
+    bot_username = client.username if client.username else (await client.get_me()).username
     recycle_text = (
         "<b>🗑️ Media Automatically Removed</b>\n"
         "<blockquote><b>The previous files have been deleted due to copyright protection regulations. If you wish to restore or retrieve the media again, click the [ ♻️ Click Here ] button below. Alternatively, you can close this alert. ❞</b></blockquote>"
@@ -238,7 +239,7 @@ async def delete_files(messages, client, k, file_token):
     recycle_buttons = []
     if file_token:
         recycle_buttons.append([
-            InlineKeyboardButton("♻️ Click Here", url=f"https://t.me/{client.username}?start={file_token}"),
+            InlineKeyboardButton("♻️ Click Here", url=f"https://t.me/{bot_username}?start={file_token}"),
             InlineKeyboardButton("Close ❌", callback_data="close")
         ])
     else:
