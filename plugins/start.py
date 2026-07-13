@@ -90,9 +90,10 @@ async def start_command(client: Client, message: Message):
         
         return
     else:
+        # IMAGE 2 FIX: Gaps removed, strict HTML blockquote structure
         welcome_text = (
             f"👋 Hello {message.from_user.mention},\n\n"
-            f"<blockquote>Welcome to our bot!! You can access this bot by using special links ❤️✨💖</blockquote>"
+            "<blockquote>Welcome to our bot!! You can access this bot by using special links ❤️✨💖</blockquote>"
         )
         await message.reply_text(
             text = welcome_text,
@@ -106,7 +107,11 @@ async def start_command(client: Client, message: Message):
 @Bot.on_message(filters.command('start') & filters.private)
 async def not_joined(client: Client, message: Message):
     text = message.text
-    start_data = text.split(" ", 1)[1] if " " in text else ""
+    start_data = ""
+    if len(message.command) > 1:
+        start_data = message.command[1]
+    elif " " in text:
+        start_data = text.split(" ", 1)[1]
     
     buttons = [
         [
@@ -121,11 +126,12 @@ async def not_joined(client: Client, message: Message):
         ]
     ]
 
+    # IMAGE 1 FIX: Strictly parsing with clean blockquote layout
     sexy_force_msg = (
         f"👋 Hello {message.from_user.mention},\n\n"
-        f"⚠️ <b>You need to join my Channel/Group to use me!</b>\n\n"
-        f"<blockquote>👉 ❤️ Kindly Please join Channel to access the premium videos... ✨🥰💖</blockquote>\n\n"
-        f"⁉️ <b>FACING PROBLEMS, USE:</b> /help"
+        "⚠️ <b>You need to join my Channel/Group to use me!</b>\n\n"
+        "<blockquote>👉 ❤️ Kindly Please join Channel to access the premium videos... ✨🥰💖</blockquote>\n\n"
+        "⁉️ <b>FACING PROBLEMS, USE:</b> /help"
     )
 
     await message.reply(
@@ -139,11 +145,12 @@ async def not_joined(client: Client, message: Message):
 
 @Bot.on_message(filters.command('help') & filters.private)
 async def help_command(client: Client, message: Message):
+    # IMAGES 3 & 4 FIX: HTML blockquote container for official Telegram quote card
     help_text = (
         f"⁉️ <b>Hello {message.from_user.mention} ~</b>\n\n"
-        "<blockquote>⚠️ ⇨ <b>I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels.</b></blockquote>\n"
-        "<blockquote>📢 ⇨ <b>In order to get the files you have to join the all mentioned channel that I provide you to join. You can not access or get the files unless you joined all channels.</b></blockquote>\n"
-        "<blockquote>🚀 ⇨ <b>So join Mentioned Channels to get Files or initiate messages...</b></blockquote>"
+        "<blockquote>⚠️ ⇨ <b>I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels.</b><br><br>"
+        "📢 ⇨ <b>In order to get the files you have to join the all mentioned channel that I provide you to join. You can not access or get the files unless you joined all channels.</b><br><br>"
+        "🚀 ⇨ <b>So join Mentioned Channels to get Files or initiate messages...</b></blockquote>"
     )
     await message.reply_text(
         text=help_text,
@@ -206,7 +213,6 @@ async def send_text(client: Bot, message: Message):
         await msg.delete()
 
 
-# Callback query handler for handling the Close button action
 @Bot.on_callback_query(filters.regex("close"))
 async def close_callback(client: Client, query: CallbackQuery):
     try:
@@ -223,7 +229,7 @@ async def delete_files(messages, client, k, file_token):
         except Exception as e:
             print(f"The attempt to delete the media {msg.id} was unsuccessful: {e}")
             
-    # Modified unique recycle alert notice
+    # IMAGE 5 RECYCLE NOTICE
     recycle_text = (
         "<b>🗑️ Media Automatically Removed</b>\n"
         "<blockquote><b>The previous files have been deleted due to copyright protection regulations. If you wish to restore or retrieve the media again, click the [ ♻️ Click Here ] button below. Alternatively, you can close this alert. ❞</b></blockquote>"
@@ -246,4 +252,3 @@ async def delete_files(messages, client, k, file_token):
         )
     except Exception as e:
         print(f"Failed to show recycle UI: {e}")
-        
