@@ -10,8 +10,6 @@ import pyrogram.utils
 
 pyrogram.utils.MIN_CHANNEL_ID = -1009999999999
 
-
-
 class Bot(Client):
     def __init__(self):
         super().__init__(
@@ -28,6 +26,7 @@ class Bot(Client):
         await super().start()
         usr_bot_me = await self.get_me()
         self.uptime = datetime.now()
+        self.username = usr_bot_me.username # FIXED: Username cached globally right at startup!
 
         if FORCE_SUB_CHANNEL:
             try:
@@ -67,10 +66,10 @@ class Bot(Client):
             self.LOGGER(__name__).info("\nBot Stopped. Join https://t.me/MadflixBots_Support For Support")
             sys.exit()
 
-        self.set_parse_mode(ParseMode.HTML)
+        # FIXED: Let individual plugin components strictly dictate context formatting dynamically
         self.LOGGER(__name__).info(f"Bot Running..!\n\nCreated By \nhttps://t.me/Madflix_Bots")
         self.LOGGER(__name__).info(f"""ミ💖 MADFLIX BOTZ 💖彡""")
-        self.username = usr_bot_me.username
+        
         #web-response
         app = web.AppRunner(await web_server())
         await app.setup()
@@ -80,14 +79,3 @@ class Bot(Client):
     async def stop(self, *args):
         await super().stop()
         self.LOGGER(__name__).info("Bot Stopped...")
-            
-
-
-
-
-
-# Jishu Developer 
-# Don't Remove Credit 🥺
-# Telegram Channel @Madflix_Bots
-# Backup Channel @JishuBotz
-# Developer @JishuDeveloper
