@@ -6,64 +6,36 @@ from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
 from pyrogram.errors import FloodWait
 
 
-
-
 async def is_subscribed(filter, client, update):
-    if not FORCE_SUB_CHANNEL:
-        return True
     user_id = update.from_user.id
     if user_id in ADMINS:
         return True
-    try:
-        member = await client.get_chat_member(chat_id = FORCE_SUB_CHANNEL, user_id = user_id)
-    except UserNotParticipant:
-        return False
-
-    if not member.status in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
-        return False
-    else:
-        return True
-
-
-async def is_subscribed(filter, client, update):
-    if not FORCE_SUB_CHANNEL2:
-        return True
-    user_id = update.from_user.id
-    if user_id in ADMINS:
-        return True
-    try:
-        member = await client.get_chat_member(chat_id = FORCE_SUB_CHANNEL2, user_id = user_id)
-    except UserNotParticipant:
-        return False
-
-    if not member.status in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
-        return False
-    else:
-        return True                
-
-
-async def is_subscribed(filter, client, update):
-    if not FORCE_SUB_CHANNEL:
-        return True
-    if not FORCE_SUB_CHANNEL2:
-        return True
-    user_id = update.from_user.id
-    if user_id in ADMINS:
-        return True
-    try:
-        member = await client.get_chat_member(chat_id = FORCE_SUB_CHANNEL, user_id = user_id)
-    except UserNotParticipant:
-        return False
-    
-    try:
-        member = await client.get_chat_member(chat_id = FORCE_SUB_CHANNEL2, user_id = user_id)
-    except UserNotParticipant:
-        return False
         
-    else:
-        return True
+    # Check Channel 1
+    if FORCE_SUB_CHANNEL:
+        try:
+            member = await client.get_chat_member(chat_id = FORCE_SUB_CHANNEL, user_id = user_id)
+            if member.status not in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
+                return False
+        except UserNotParticipant:
+            return False
+        except:
+            pass
+
+    # Check Channel 2
+    if FORCE_SUB_CHANNEL2:
+        try:
+            member2 = await client.get_chat_member(chat_id = FORCE_SUB_CHANNEL2, user_id = user_id)
+            if member2.status not in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
+                return False
+        except UserNotParticipant:
+            return False
+        except:
+            pass
+            
+    return True
         
-        
+
 async def encode(string):
     string_bytes = string.encode("ascii")
     base64_bytes = base64.urlsafe_b64encode(string_bytes)
@@ -72,7 +44,7 @@ async def encode(string):
 
 
 async def decode(base64_string):
-    base64_string = base64_string.strip("=") # links generated before this commit will be having = sign, hence striping them to handle padding errors.
+    base64_string = base64_string.strip("=")
     base64_bytes = (base64_string + "=" * (-len(base64_string) % 4)).encode("ascii")
     string_bytes = base64.urlsafe_b64decode(base64_bytes) 
     string = string_bytes.decode("ascii")
@@ -150,14 +122,3 @@ def get_readable_time(seconds: int) -> str:
 
 
 subscribed = filters.create(is_subscribed)
-       
-
-
-
-
-
-# Jishu Developer 
-# Don't Remove Credit 🥺
-# Telegram Channel @Madflix_Bots
-# Backup Channel @JishuBotz
-# Developer @JishuDeveloper
