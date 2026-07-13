@@ -13,9 +13,6 @@ jishudeveloper = madflixofficials
 file_auto_delete = humanize.naturaldelta(jishudeveloper)
 
 
-
-
-
 @Bot.on_message(filters.command('start') & filters.private & subscribed)
 async def start_command(client: Client, message: Message):
     id = message.from_user.id
@@ -61,7 +58,7 @@ async def start_command(client: Client, message: Message):
             return
         await temp_msg.delete()
     
-        madflix_msgs = [] # List to keep track of sent messages
+        madflix_msgs = []
 
         for msg in messages:
 
@@ -77,7 +74,6 @@ async def start_command(client: Client, message: Message):
 
             try:
                 madflix_msg = await msg.copy(chat_id=message.from_user.id, caption = caption, parse_mode = ParseMode.HTML, reply_markup = reply_markup, protect_content=PROTECT_CONTENT)
-                # await asyncio.sleep(0.5)
                 madflix_msgs.append(madflix_msg)
                 
             except FloodWait as e:
@@ -88,62 +84,36 @@ async def start_command(client: Client, message: Message):
             except:
                 pass
 
-
         k = await client.send_message(chat_id = message.from_user.id, text=f"<b>❗️ <u>IMPORTANT</u> ❗️</b>\n\nThis Video / File Will Be Deleted In {file_auto_delete} (Due To Copyright Issues).\n\n📌 Please Forward This Video / File To Somewhere Else And Start Downloading There.")
 
-        # Schedule the file deletion
-        asyncio.create_task(delete_files(madflix_msgs, client, k))
+        # Pass original command token so it can be re-fetched after deletion
+        asyncio.create_task(delete_files(madflix_msgs, client, k, text.split(" ", 1)[1] if " " in text else ""))
         
-        # for madflix_msg in madflix_msgs: 
-            # try:
-                # await madflix_msg.delete()
-                # await k.edit_text("Your Video / File Is Successfully Deleted ✅") 
-            # except:    
-                # pass 
-
         return
     else:
-        reply_markup = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton("😊 About Me", callback_data = "about"),
-                    InlineKeyboardButton("🔒 Close", callback_data = "close")
-                ]
-            ]
-        )
+        # Clean UI with no buttons on direct /start
         await message.reply_text(
-            text = START_MSG.format(
-                first = message.from_user.first_name,
-                last = message.from_user.last_name,
-                username = None if not message.from_user.username else '@' + message.from_user.username,
-                mention = message.from_user.mention,
-                id = message.from_user.id
-            ),
-            reply_markup = reply_markup,
+            text = f"Hello {message.from_user.mention},\n\nWelcome to File Sharing Bot! Send me any file link to access it or store files in the database.",
             disable_web_page_preview = True,
             quote = True
         )
         return
 
     
-
-
-
-    
-    
 @Bot.on_message(filters.command('start') & filters.private)
 async def not_joined(client: Client, message: Message):
+    # Dynamic channels fetched directly from your current system settings
     buttons = [
         [
-            InlineKeyboardButton(text="Join Channel 1", url=client.invitelink),
-            InlineKeyboardButton(text="Join Channel 2", url=client.invitelink2),
+            InlineKeyboardButton(text="Join Channel 1 📢", url=client.invitelink),
+            InlineKeyboardButton(text="Join Channel 2 📢", url=client.invitelink2),
         ]
     ]
     try:
         buttons.append(
             [
                 InlineKeyboardButton(
-                    text = 'Try Again',
+                    text = '♻️ Try Again',
                     url = f"https://t.me/{client.username}?start={message.command[1]}"
                 )
             ]
@@ -151,19 +121,35 @@ async def not_joined(client: Client, message: Message):
     except IndexError:
         pass
 
+    sexy_force_msg = (
+        f"👋 **Hello {message.from_user.mention}**,\n\n"
+        "⚠️ **You need to join my Channel/Group to use me!**\n\n"
+        "👉 ❤️ *Kindly Please join Channel to access the premium videos...* ✨🥰💖\n\n"
+        "⁉️ **FACING PROBLEMS, USE:** /help"
+    )
+
     await message.reply(
-        text = FORCE_MSG.format(
-                first = message.from_user.first_name,
-                last = message.from_user.last_name,
-                username = None if not message.from_user.username else '@' + message.from_user.username,
-                mention = message.from_user.mention,
-                id = message.from_user.id
-            ),
+        text = sexy_force_msg,
         reply_markup = InlineKeyboardMarkup(buttons),
         quote = True,
         disable_web_page_preview = True
     )
 
+
+@Bot.on_message(filters.command('help') & filters.private)
+async def help_command(client: Client, message: Message):
+    help_text = (
+        f"⁉️ **Hello {message.from_user.mention} ~**\n\n"
+        "> ⇨ **I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels.**\n"
+        ">\n"
+        "> ⇨ **In order to get the files you have to join the all mentioned channel that I provide you to join. You can not access or get the files unless you joined all channels.**\n"
+        ">\n"
+        "> ⇨ **So join Mentioned Channels to get Files or initiate messages...**"
+    )
+    await message.reply_text(
+        text=help_text,
+        quote=True
+    )
 
 
 @Bot.on_message(filters.command('users') & filters.private & filters.user(ADMINS))
@@ -171,7 +157,6 @@ async def get_users(client: Bot, message: Message):
     msg = await client.send_message(chat_id=message.chat.id, text=f"Processing...")
     users = await full_userbase()
     await msg.edit(f"{len(users)} Users Are Using This Bot")
-
 
 
 @Bot.on_message(filters.private & filters.command('broadcast') & filters.user(ADMINS))
@@ -221,27 +206,31 @@ async def send_text(client: Bot, message: Message):
         await msg.delete()
 
 
-
-
-
-
-
-
-# Function to handle file deletion
-async def delete_files(messages, client, k):
-    await asyncio.sleep(FILE_AUTO_DELETE)  # Wait for the duration specified in config.py
+# Dynamic Auto Delete + Recycle Logic Built-in
+async def delete_files(messages, client, k, file_token):
+    await asyncio.sleep(FILE_AUTO_DELETE) 
     for msg in messages:
         try:
             await client.delete_messages(chat_id=msg.chat.id, message_ids=[msg.id])
         except Exception as e:
             print(f"The attempt to delete the media {msg.id} was unsuccessful: {e}")
-    # await client.send_message(messages[0].chat.id, "Your Video / File Is Successfully Deleted ✅")
-    await k.edit_text("Your Video / File Is Successfully Deleted ✅")
-
-
-
-# Jishu Developer 
-# Don't Remove Credit 🥺
-# Telegram Channel @Madflix_Bots
-# Backup Channel @JishuBotz
-# Developer @JishuDeveloper
+            
+    # RECYCLE UI SETUP: Edits the notice message to look exactly like your picture!
+    recycle_text = (
+        "**Previous Message was Deleted**\n"
+        "> **If you want to get the files again, then click: [ ♻️ Click Here ] button below else close this message.** ❞"
+    )
+    
+    recycle_buttons = []
+    if file_token:
+        recycle_buttons.append([InlineKeyboardButton("♻️ Click Here", url=f"https://t.me/{client.username}?start={file_token}")])
+    
+    recycle_buttons.append([InlineKeyboardButton("Close ❌", callback_data="close")])
+        
+    try:
+        await k.edit_text(
+            text=recycle_text,
+            reply_markup=InlineKeyboardMarkup(recycle_buttons)
+        )
+    except Exception as e:
+        print(f"Failed to show recycle UI: {e}")
