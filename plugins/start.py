@@ -3,9 +3,11 @@ from pyrogram import Client, filters, __version__
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import FloodWait, UserIsBlocked, InputUserDeactivated
+from pyrogram.enums import ChatMemberStatus
+from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
 from bot import Bot
-from config import ADMINS, FORCE_MSG, START_MSG, CUSTOM_CAPTION, DISABLE_CHANNEL_BUTTON, PROTECT_CONTENT, FILE_AUTO_DELETE
-from helper_func import subscribed, encode, decode, get_messages
+from config import ADMINS, FORCE_MSG, START_MSG, CUSTOM_CAPTION, DISABLE_CHANNEL_BUTTON, FILE_AUTO_DELETE, FORCE_SUB_CHANNEL, FORCE_SUB_CHANNEL2
+from helper_func import encode, decode, get_messages
 from database.database import add_user, del_user, full_userbase, present_user
 
 madflixofficials = FILE_AUTO_DELETE
@@ -58,74 +60,122 @@ async def send_media_files(client: Client, message: Message, file_token: str):
             reply_markup = msg.reply_markup if DISABLE_CHANNEL_BUTTON else None
 
             try:
-                madflix_msg = await msg.copy(chat_id=message.chat.id, caption = caption, parse_mode = ParseMode.HTML, reply_markup = reply_markup, protect_content=PROTECT_CONTENT)
+                # IMAGE 3 FIX: Enforced strict text cleanup and protect_content=True to block forward/save
+                madflix_msg = await msg.copy(
+                    chat_id=message.chat.id, 
+                    caption=caption, 
+                    parse_mode=ParseMode.HTML, 
+                    reply_markup=reply_markup, 
+                    protect_content=True
+                )
                 madflix_msgs.append(madflix_msg)
             except FloodWait as e:
                 await asyncio.sleep(e.x)
-                madflix_msg = await msg.copy(chat_id=message.chat.id, caption = caption, parse_mode = ParseMode.HTML, reply_markup = reply_markup, protect_content=PROTECT_CONTENT)
+                madflix_msg = await msg.copy(
+                    chat_id=message.chat.id, 
+                    caption=caption, 
+                    parse_mode=ParseMode.HTML, 
+                    reply_markup=reply_markup, 
+                    protect_content=True
+                )
                 madflix_msgs.append(madflix_msg)
             except:
                 pass
 
-        k = await client.send_message(chat_id = message.chat.id, text=f"<b>❗️ <u>IMPORTANT</u> ❗️</b>\n\nThis Video / File Will Be Deleted In {file_auto_delete} (Due To Copyright Issues).\n\n📌 Please Forward This Video / File To Somewhere Else And Start Downloading There.")
+        # IMAGE 3 FIX: Only important notification and bot username with blank line spacing
+        bot_me = await client.get_me()
+        clean_notice_text = (
+            f"<b>❗️ <u>IMPORTANT</u> ❗️</b>\n\n"
+            f"This Video / File Will Be Deleted In {file_auto_delete} (Due To Copyright Issues).\n\n"
+            f"🤖 @{bot_me.username}"
+        )
+        
+        k = await client.send_message(chat_id=message.chat.id, text=clean_notice_text, parse_mode=ParseMode.HTML)
         asyncio.create_task(delete_files(madflix_msgs, client, k, file_token))
         return True
     except:
         return False
 
 
-@Bot.on_message(filters.command('start') & filters.private & subscribed)
-async def start_command(client: Client, message: Message):
+@Bot.on_message(filters.command('start') & filters.private)
+async def start_and_force_sub_handler(client: Client, message: Message):
     id = message.from_user.id
     if not await present_user(id):
         try: await add_user(id)
         except: pass
     
     text = message.text
-    if len(text) > 7:
-        file_token = text.split(" ", 1)[1]
-        success = await send_media_files(client, message, file_token)
-        if success: return
-        
-    welcome_text = (
-        f"👋 Hello {message.from_user.mention},\n\n"
-        "<blockquote>Welcome to our bot!! You can access this bot by using special links ❤️✨💖</blockquote>"
-    )
-    await message.reply_text(text=welcome_text, parse_mode=ParseMode.HTML, disable_web_page_preview=True, quote=True)
-
-
-@Bot.on_message(filters.command('start') & filters.private)
-async def not_joined(client: Client, message: Message):
-    text = message.text
     start_data = text.split(" ", 1)[1] if " " in text else "none"
     
-    buttons = [
-        [
-            InlineKeyboardButton(text="Join Channel 1 📢", url=client.invitelink),
-            InlineKeyboardButton(text="Join Channel 2 📢", url=client.invitelink2),
-        ],
-        [
-            InlineKeyboardButton(text='♻️ Try Again', callback_data=f"checksub_{start_data}")
-        ]
-    ]
+    # Check current subscription states for target user
+    show_ch1 = False
+    show_ch2 = False
+    
+    if id not in ADMINS:
+        if FORCE_SUB_CHANNEL:
+            try:
+                member = await client.get_chat_member(chat_id=FORCE_SUB_CHANNEL, user_id=id)
+                if member.status not in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
+                    show_ch1 = True
+            except UserNotParticipant:
+                show_ch1 = True
+            except:
+                pass
+                
+        if FORCE_SUB_CHANNEL2:
+            try:
+                member2 = await client.get_chat_member(chat_id=FORCE_SUB_CHANNEL2, user_id=id)
+                if member2.status not in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.MEMBER]:
+                    show_ch2 = True
+            except UserNotParticipant:
+                show_ch2 = True
+            except:
+                pass
 
+    # Verification clean state route path
+    if not show_ch1 and not show_ch2:
+        if len(text) > 7:
+            success = await send_media_files(client, message, start_data)
+            if success: return
+            
+        welcome_text = (
+            f"👋 Hello {message.from_user.mention},\n\n"
+            "<blockquote>Welcome to our bot!! You can access this bot by using special links ❤️✨💖</blockquote>"
+        )
+        await message.reply_text(text=welcome_text, parse_mode=ParseMode.HTML, disable_web_page_preview=True, quote=True)
+        return
+
+    # IMAGE 1 FIX: Adaptive selective button list assembly
+    buttons = []
+    ch_row = []
+    if show_ch1:
+        ch_row.append(InlineKeyboardButton(text="Join Channel 1 📢", url=client.invitelink))
+    if show_ch2:
+        ch_row.append(InlineKeyboardButton(text="Join Channel 2 📢", url=client.invitelink2))
+        
+    if ch_row:
+        buttons.append(ch_row)
+        
+    buttons.append([InlineKeyboardButton(text='♻️ Try Again', callback_data=f"checksub_{start_data}")])
+
+    # IMAGE 1 FIX: Force subscription instruction mapped securely inside blockquote 
     sexy_force_msg = (
         f"👋 Hello {message.from_user.mention},\n\n"
-        "⚠️ <b>You need to join my Channel/Group to use me!</b>\n\n"
-        "<blockquote>👉 ❤️ Kindly Please join Channel to access the premium videos... ✨🥰💖</blockquote>\n\n"
-        "⁉️ <b>FACING PROBLEMS, USE:</b> /help"
+        "<blockquote>⚠️ <b>You need to join my Channel/Group to use me!</b>\n\n"
+        "👉 ❤️ Kindly Please join Channel to access the premium videos... ✨🥰💖\n\n"
+        "⁉️ <b>FACING PROBLEMS, USE:</b> /help</blockquote>"
     )
     await message.reply(text=sexy_force_msg, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=ParseMode.HTML, quote=True, disable_web_page_preview=True)
 
 
 @Bot.on_message(filters.command('help') & filters.private)
 async def help_command(client: Client, message: Message):
-    # FIXED: Added Spacing, Love Emojis, and line-by-line secure Quote boxes
+    # IMAGE 2 FIX: Complete line breaks, expanded clean structure with unified text quotes
     help_text = (
         f"⁉️ <b>Hello {message.from_user.mention} ~</b>\n\n"
-        "<blockquote>⚠️ ⇨ <b>I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels ❤️✨</b></blockquote>\n"
-        "<blockquote>📢 ⇨ <b>In order to get the files you have to join all the mentioned channels that I provide you to join 💖 You cannot access or get the files unless you joined all channels 🥰</b></blockquote>\n"
-        "<blockquote>🚀 ⇨ <b>So kindly join the Mentioned Channels to get your Files instantly! ❤️🌟</b></blockquote>"
+        "<blockquote>⚠️ ⇨ <b>I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels ❤️✨</b>\n\n"
+        "📢 ⇨ <b>In order to get the files you have to join all the mentioned channels that I provide you to join 💖 You cannot access or get the files unless you joined all channels 🥰</b>\n\n"
+        "🚀 ⇨ <b>So kindly join the Mentioned Channels to get your Files instantly! ❤️🌟</b></blockquote>"
     )
     await message.reply_text(text=help_text, parse_mode=ParseMode.HTML, quote=True)
 
@@ -136,10 +186,10 @@ async def delete_files(messages, client, k, file_token):
         try: await client.delete_messages(chat_id=msg.chat.id, message_ids=[msg.id])
         except Exception as e: print(f"Delete failed: {e}")
             
-    # FIXED: Reconstructed from inspiration image UI (Clean quote box)
+    # IMAGE 4 FIX: Recycled message text completely wrapped inside the blue blockquote box
     recycle_text = (
-        "<b>Previous Message was Deleted 🗑️</b>\n"
-        "<blockquote><b>If you want to get the files again, then click: [ ♻️ Click Here ] button below else close this message ❤️✨</b></blockquote>"
+        "<blockquote><b>Previous Message was Deleted 🗑️</b>\n\n"
+        "<b>If you want to get the files again, then click: [ ♻️ Click Here ] button below else close this message ❤️✨</b></blockquote>"
     )
     
     recycle_buttons = []
