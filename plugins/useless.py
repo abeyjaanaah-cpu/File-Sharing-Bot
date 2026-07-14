@@ -6,7 +6,6 @@ from datetime import datetime
 from helper_func import get_readable_time
 
 
-
 @Bot.on_message(filters.command('stats') & filters.user(ADMINS))
 async def stats(bot: Bot, message: Message):
     now = datetime.now()
@@ -15,14 +14,11 @@ async def stats(bot: Bot, message: Message):
     await message.reply(BOT_STATS_TEXT.format(uptime=time))
 
 
-
-@Bot.on_message(filters.private & filters.incoming)
-async def useless(_,message: Message):
+@Bot.on_message(filters.private & filters.incoming & ~filters.command(['start', 'help', 'users', 'broadcast', 'batch', 'bulk', 'stats']))
+async def useless(_, message: Message):
     if USER_REPLY_TEXT:
-        await message.reply(USER_REPLY_TEXT)
-
-
-
+        # 2nd MESSAGE REQ: Enclosing direct response in clean italics
+        await message.reply(f"<i>{USER_REPLY_TEXT}</i>")
 
 
 # Jishu Developer 
