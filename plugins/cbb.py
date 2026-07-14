@@ -7,7 +7,6 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, 
 async def cb_handler(client: Bot, query: CallbackQuery):
     data = query.data
     
-    # === 1. TUMHARA PURANA SYSTEM LOGIC (PRESERVED) ===
     if data == "about":
         await query.message.edit_text(
             text = f"<b>🤖 My Name :</b> <a href='https://t.me/FileSharingXProBot'>File Sharing Bot</a> \n<b>📝 Language :</b> <a href='https://python.org'>Python 3</a> \n<b>📚 Library :</b> <a href='https://pyrogram.org'>Pyrogram {__version__}</a> \n<b>🚀 Server :</b> <a href='https://heroku.com'>Heroku</a> \n<b>📢 Channel :</b> <a href='https://t.me/Madflix_Bots'>Madflix Botz</a> \n<b>🧑‍💻 Developer :</b> <a href='tg://user?id={OWNER_ID}'>Jishu Developer</a>",
@@ -27,17 +26,26 @@ async def cb_handler(client: Bot, query: CallbackQuery):
         except:
             pass
 
-    # === 2. NAYA CALLBACK ROUTING SYSTEM FOR SUBS & RECYCLE ===
     elif data.startswith("checksub_"):
         from helper_func import is_subscribed
-        from plugins.start import send_media_files
+        from plugins.start import send_media_files, start_and_force_sub_handler
         
+        # IMAGE 1 FIX: Instead of native hindi popup alert, dynamic loop routing fallback
         is_user_subscribed = await is_subscribed(None, client, query)
         if not is_user_subscribed:
-            await query.answer("⚠️ Aapne dono channels join nahi kiye hain! Pehle join karein ❤️", show_alert=True)
+            await query.answer() # Dynamic silent acknowledgement to stop buffering
+            # Force trigger the validation message block inside chat screen again
+            query.message.from_user = query.from_user
+            file_token = data.split("_", 1)[1]
+            query.message.text = f"/start {file_token}" if file_token != "none" else "/start"
+            await start_and_force_sub_handler(client, query.message)
+            try:
+                await query.message.delete()
+            except:
+                pass
             return
 
-        await query.answer("✅ Verification Successful! Processing files... 💖", show_alert=False)
+        await query.answer()
         file_token = data.split("_", 1)[1]
         
         try:
@@ -47,8 +55,8 @@ async def cb_handler(client: Bot, query: CallbackQuery):
 
         if file_token == "none" or not file_token:
             welcome_text = (
-                f"👋 Hello {query.from_user.mention},\n\n"
-                "<blockquote>Welcome to our bot!! You can access this bot by using special links ❤️✨💖</blockquote>"
+                f"<b><i>👋 Hello {query.from_user.mention},\n\n"
+                "Welcome to our bot!! You can access this bot by using special links ❤️✨💖</i></b>"
             )
             await client.send_message(chat_id=query.from_user.id, text=welcome_text, parse_mode=client.parse_mode)
         else:
@@ -56,17 +64,10 @@ async def cb_handler(client: Bot, query: CallbackQuery):
 
     elif data.startswith("getagain_"):
         from plugins.start import send_media_files
-        await query.answer("♻️ Restoring your media... ✨", show_alert=False)
+        await query.answer()
         file_token = data.split("_", 1)[1]
         try:
             await query.message.delete()
         except:
             pass
         await send_media_files(client, query.message, file_token)
-
-
-# Jishu Developer 
-# Don't Remove Credit 🥺
-# Telegram Channel @Madflix_Bots
-# Backup Channel @JishuBotz
-# Developer @JishuDeveloper
