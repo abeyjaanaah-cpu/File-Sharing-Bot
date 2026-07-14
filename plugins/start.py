@@ -82,7 +82,6 @@ async def send_media_files(client: Client, message: Message, file_token: str):
                 pass
 
         bot_me = await client.get_me()
-        # IMAGE 4 REQ: Text completely bolded, copyright string removed
         clean_notice_text = (
             f"<b>❗️ <u>IMPORTANT</u> ❗️</b>\n\n"
             f"<b>This Video / File Will Be Deleted In {file_auto_delete}.</b>\n\n"
@@ -135,7 +134,7 @@ async def start_and_force_sub_handler(client: Client, message: Message):
             success = await send_media_files(client, message, start_data)
             if success: return
             
-        # IMAGE 2 FIX: Text perfectly formatted in classic italic style
+        # 1st MESSAGE REQ: Welcome text inside clean italic format
         welcome_text = (
             f"<i>👋 Hello {message.from_user.mention},\n\n"
             "Welcome to our bot!! You can access this bot by using special links ❤️✨💖</i>"
@@ -155,7 +154,6 @@ async def start_and_force_sub_handler(client: Client, message: Message):
         
     buttons.append([InlineKeyboardButton(text='♻️ Try Again', callback_data=f"checksub_{start_data}")])
 
-    # IMAGE 1 FIX: Quotes removed, text completely bolded with proper clean paragraph line spacings
     sexy_force_msg = (
         f"<b>👋 Hello {message.from_user.mention},</b>\n\n"
         "<b>⚠️ You need to join my Channel/Group to use me!</b>\n\n"
@@ -167,7 +165,6 @@ async def start_and_force_sub_handler(client: Client, message: Message):
 
 @Bot.on_message(filters.command('help') & filters.private)
 async def help_command(client: Client, message: Message):
-    # IMAGE 3 REQ FROM USER: Quotes removed completely, clean standard line spacing restored
     help_text = (
         f"⁉️ <b>Hello {message.from_user.mention} ~</b>\n\n"
         "⚠️ ⇨ <b>I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels ❤️✨</b>\n\n"
@@ -183,7 +180,6 @@ async def delete_files(messages, client, k, file_token):
         try: await client.delete_messages(chat_id=msg.chat.id, message_ids=[msg.id])
         except Exception as e: print(f"Delete failed: {e}")
             
-    # IMAGE 5 FIX: Quotes completely removed from recycle template notice
     recycle_text = (
         "<b>Previous Message was Deleted 🗑️</b>\n\n"
         "<b>If you want to get the files again, then click: [ ♻️ Click Here ] button below else close this message ❤️✨</b>"
@@ -217,13 +213,35 @@ async def send_text(client: Bot, message: Message):
         broadcast_msg = message.reply_to_message
         total, successful, blocked, deleted, unsuccessful = 0, 0, 0, 0, 0
         pls_wait = await message.reply("<i>Broadcasting Message.. This will Take Some Time</i>")
+        
         for chat_id in query:
             try:
-                await broadcast_msg.copy(chat_id)
+                # DYNAMIC BROADCAST ITALIC FORCING ENGINE
+                if broadcast_msg.text:
+                    # Pure text message code path logic
+                    await client.send_message(
+                        chat_id=chat_id,
+                        text=f"<i>{broadcast_msg.text.html if broadcast_msg.text.html else broadcast_msg.text}</i>",
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=broadcast_msg.reply_markup
+                    )
+                else:
+                    # Media templates (Photo/Video/Files captions fallback conversion)
+                    caption = f"<i>{broadcast_msg.caption.html if broadcast_msg.caption else ''}</i>"
+                    await broadcast_msg.copy(chat_id=chat_id, caption=caption, parse_mode=ParseMode.HTML)
                 successful += 1
             except FloodWait as e:
                 await asyncio.sleep(e.x)
-                await broadcast_msg.copy(chat_id)
+                if broadcast_msg.text:
+                    await client.send_message(
+                        chat_id=chat_id,
+                        text=f"<i>{broadcast_msg.text.html if broadcast_msg.text.html else broadcast_msg.text}</i>",
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=broadcast_msg.reply_markup
+                    )
+                else:
+                    caption = f"<i>{broadcast_msg.caption.html if broadcast_msg.caption else ''}</i>"
+                    await broadcast_msg.copy(chat_id=chat_id, caption=caption, parse_mode=ParseMode.HTML)
                 successful += 1
             except UserIsBlocked:
                 await del_user(chat_id)
