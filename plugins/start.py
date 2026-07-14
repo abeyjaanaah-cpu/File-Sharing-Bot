@@ -82,10 +82,11 @@ async def send_media_files(client: Client, message: Message, file_token: str):
                 pass
 
         bot_me = await client.get_me()
+        # IMAGE 4 REQ: Text completely bolded, copyright string removed
         clean_notice_text = (
             f"<b>❗️ <u>IMPORTANT</u> ❗️</b>\n\n"
             f"<b>This Video / File Will Be Deleted In {file_auto_delete}.</b>\n\n"
-            f"🤖 @{bot_me.username}"
+            f"<b>🤖 @{bot_me.username}</b>"
         )
         
         k = await client.send_message(chat_id=message.chat.id, text=clean_notice_text, parse_mode=ParseMode.HTML)
@@ -134,9 +135,10 @@ async def start_and_force_sub_handler(client: Client, message: Message):
             success = await send_media_files(client, message, start_data)
             if success: return
             
+        # IMAGE 2 FIX: Text perfectly formatted in classic italic style
         welcome_text = (
-            f"👋 Hello {message.from_user.mention},\n\n"
-            "<blockquote>Welcome to our bot!! You can access this bot by using special links ❤️✨💖</blockquote>"
+            f"<i>👋 Hello {message.from_user.mention},\n\n"
+            "Welcome to our bot!! You can access this bot by using special links ❤️✨💖</i>"
         )
         await message.reply_text(text=welcome_text, parse_mode=ParseMode.HTML, disable_web_page_preview=True, quote=True)
         return
@@ -153,24 +155,24 @@ async def start_and_force_sub_handler(client: Client, message: Message):
         
     buttons.append([InlineKeyboardButton(text='♻️ Try Again', callback_data=f"checksub_{start_data}")])
 
-    # FIXED: Separate independent quote boxes for each line to avoid joint bars
+    # IMAGE 1 FIX: Quotes removed, text completely bolded with proper clean paragraph line spacings
     sexy_force_msg = (
-        f"👋 Hello {message.from_user.mention},\n\n"
-        "<blockquote>⚠️ <b>You need to join my Channel/Group to use me!</b></blockquote>\n"
-        "<blockquote>👉 ❤️ Kindly Please join Channel to access the content... ✨🥰💖</blockquote>\n"
-        "<blockquote>⁉️ <b>FACING PROBLEMS, USE:</b> /help</blockquote>"
+        f"<b>👋 Hello {message.from_user.mention},</b>\n\n"
+        "<b>⚠️ You need to join my Channel/Group to use me!</b>\n\n"
+        "<b>👉 ❤️ Kindly Please join Channel to access the content... ✨🥰💖</b>\n\n"
+        "<b>⁉️ FACING PROBLEMS, USE: /help</b>"
     )
     await message.reply(text=sexy_force_msg, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=ParseMode.HTML, quote=True, disable_web_page_preview=True)
 
 
 @Bot.on_message(filters.command('help') & filters.private)
 async def help_command(client: Client, message: Message):
-    # FIXED: Individual independent single quote blocks per sentence rule mapped here
+    # IMAGE 3 REQ FROM USER: Quotes removed completely, clean standard line spacing restored
     help_text = (
         f"⁉️ <b>Hello {message.from_user.mention} ~</b>\n\n"
-        "<blockquote>⚠️ ⇨ <b>I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels ❤️✨</b></blockquote>\n\n"
-        "<blockquote>📢 ⇨ <b>In order to get the files you have to join all the mentioned channels that I provide you to join 💖 You cannot access or get the files unless you joined all channels 🥰</b></blockquote>\n\n"
-        "<blockquote>🚀 ⇨ <b>So kindly join the Mentioned Channels to get your Files instantly! ❤️🌟</b></blockquote>"
+        "⚠️ ⇨ <b>I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels ❤️✨</b>\n\n"
+        "📢 ⇨ <b>In order to get the files you have to join all the mentioned channels that I provide you to join 💖 You cannot access or get the files unless you joined all channels 🥰</b>\n\n"
+        "🚀 ⇨ <b>So kindly join the Mentioned Channels to get your Files instantly! ❤️🌟</b>"
     )
     await message.reply_text(text=help_text, parse_mode=ParseMode.HTML, quote=True)
 
@@ -181,10 +183,10 @@ async def delete_files(messages, client, k, file_token):
         try: await client.delete_messages(chat_id=msg.chat.id, message_ids=[msg.id])
         except Exception as e: print(f"Delete failed: {e}")
             
-    # FIXED: Separate line quote styling and fully bold configuration active
+    # IMAGE 5 FIX: Quotes completely removed from recycle template notice
     recycle_text = (
-        "<blockquote><b>Previous Message was Deleted 🗑️</b></blockquote>\n"
-        "<blockquote><b>If you want to get the files again, then click: [ ♻️ Click Here ] button below else close this message ❤️✨</b></blockquote>"
+        "<b>Previous Message was Deleted 🗑️</b>\n\n"
+        "<b>If you want to get the files again, then click: [ ♻️ Click Here ] button below else close this message ❤️✨</b>"
     )
     
     recycle_buttons = []
