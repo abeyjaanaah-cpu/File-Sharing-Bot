@@ -5,7 +5,7 @@ from pyrogram import Client
 from pyrogram.enums import ParseMode
 import sys
 from datetime import datetime
-from config import API_HASH, API_ID, LOGGER, BOT_TOKEN, TG_BOT_WORKERS, FORCE_SUB_CHANNEL, FORCE_SUB_CHANNEL2, CHANNEL_ID, PORT
+from config import API_HASH, API_ID, LOGGER, BOT_TOKEN, TG_BOT_WORKERS, FORCE_SUB_CHANNEL, FORCE_SUB_CHANNEL2, CHANNEL_ID, PORT, ADMINS
 import pyrogram.utils
 
 pyrogram.utils.MIN_CHANNEL_ID = -1009999999999
@@ -38,8 +38,6 @@ class Bot(Client):
             except Exception as a:
                 self.LOGGER(__name__).warning(a)
                 self.LOGGER(__name__).warning("Bot Can't Export Invite Link From Force Sub Channel !")
-                self.LOGGER(__name__).warning(f"Please Double Check The FORCE_SUB_CHANNEL Value And Make Sure Bot Is Admin In Channel With Invite Users Via Link Permission, Current Force Sub Channel Value: {FORCE_SUB_CHANNEL}")
-                self.LOGGER(__name__).info("\nBot Stopped. https://t.me/MadflixBots_Support For Support")
                 sys.exit()
         if FORCE_SUB_CHANNEL2:
             try:
@@ -51,8 +49,6 @@ class Bot(Client):
             except Exception as a:
                 self.LOGGER(__name__).warning(a)
                 self.LOGGER(__name__).warning("Bot Can't Export Invite Link From Force Sub Channel !")
-                self.LOGGER(__name__).warning(f"Please Double Check The FORCE_SUB_CHANNEL2 Value And Make Sure Bot Is Admin In Channel With Invite Users Via Link Permission, Current Force Sub Channel Value: {FORCE_SUB_CHANNEL2}")
-                self.LOGGER(__name__).info("\nBot Stopped. https://t.me/MadflixBots_Support For Support")
                 sys.exit()
 
         try:
@@ -62,11 +58,25 @@ class Bot(Client):
             await test.delete()
         except Exception as e:
             self.LOGGER(__name__).warning(e)
-            self.LOGGER(__name__).warning(f"Make Sure Bot Is Admin In DB Channel, And Double Check The CHANNEL_ID Value, Current Value: {CHANNEL_ID}")
-            self.LOGGER(__name__).info("\nBot Stopped. Join https://t.me/MadflixBots_Support For Support")
             sys.exit()
 
-        # FIXED: Let individual plugin components strictly dictate context formatting dynamically
+        # DYNAMIC ADMIN MENU SCOPE HOOK: Set exclusive commands on Telegram interface for Admins automatically
+        from pyrogram.types import BotCommand, BotCommandScopeChat
+        for admin_id in ADMINS:
+            try:
+                await self.set_bot_commands(
+                    commands=[
+                        BotCommand("start", "Bot ko shuru karne ke liye"),
+                        BotCommand("batch", "Batch link banane ke liye"),
+                        BotCommand("bulk", "Range files ka single link"),
+                        BotCommand("stats", "Live server stats dekhne ke liye"),
+                        BotCommand("broadcast", "Saare users ko message bhejna")
+                    ],
+                    scope=BotCommandScopeChat(chat_id=admin_id)
+                )
+            except Exception:
+                pass
+
         self.LOGGER(__name__).info(f"Bot Running..!\n\nCreated By \nhttps://t.me/Madflix_Bots")
         self.LOGGER(__name__).info(f"""ミ💖 MADFLIX BOTZ 💖彡""")
         
