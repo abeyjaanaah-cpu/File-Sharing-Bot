@@ -57,6 +57,10 @@ async def send_media_files(client: Client, message: Message, file_token: str):
             else:
                 caption = "" if not msg.caption else msg.caption.html
 
+            # IMAGE 3 FIX: Converting message core string layouts to bold italic structure
+            if caption:
+                caption = f"<b><i>{caption}</i></b>"
+
             reply_markup = msg.reply_markup if DISABLE_CHANNEL_BUTTON else None
 
             try:
@@ -82,10 +86,11 @@ async def send_media_files(client: Client, message: Message, file_token: str):
                 pass
 
         bot_me = await client.get_me()
+        # IMAGE 4 FIX: Complete bold-italic enforcement active on notification text
         clean_notice_text = (
-            f"<b>❗️ <u>IMPORTANT</u> ❗️</b>\n\n"
-            f"<b>This Video / File Will Be Deleted In {file_auto_delete}.</b>\n\n"
-            f"<b>🤖 @{bot_me.username}</b>"
+            f"<b><i>❗️ <u>IMPORTANT</u> ❗️</i></b>\n\n"
+            f"<b><i>This Video / File Will Be Deleted In {file_auto_delete}.</i></b>\n\n"
+            f"<b><i>🤖 @{bot_me.username}</i></b>"
         )
         
         k = await client.send_message(chat_id=message.chat.id, text=clean_notice_text, parse_mode=ParseMode.HTML)
@@ -134,10 +139,10 @@ async def start_and_force_sub_handler(client: Client, message: Message):
             success = await send_media_files(client, message, start_data)
             if success: return
             
-        # 1st MESSAGE REQ: Welcome text inside clean italic format
+        # IMAGE 2 FIX: Enforced dynamic bold-italic styles
         welcome_text = (
-            f"<i>👋 Hello {message.from_user.mention},\n\n"
-            "Welcome to our bot!! You can access this bot by using special links ❤️✨💖</i>"
+            f"<b><i>👋 Hello {message.from_user.mention},\n\n"
+            "Welcome to our bot!! You can access this bot by using special links ❤️✨💖</i></b>"
         )
         await message.reply_text(text=welcome_text, parse_mode=ParseMode.HTML, disable_web_page_preview=True, quote=True)
         return
@@ -154,22 +159,24 @@ async def start_and_force_sub_handler(client: Client, message: Message):
         
     buttons.append([InlineKeyboardButton(text='♻️ Try Again', callback_data=f"checksub_{start_data}")])
 
+    # IMAGE 2 FIX: Enforced full message block inside bold-italic configurations
     sexy_force_msg = (
-        f"<b>👋 Hello {message.from_user.mention},</b>\n\n"
-        "<b>⚠️ You need to join my Channel/Group to use me!</b>\n\n"
-        "<b>👉 ❤️ Kindly Please join Channel to access the content... ✨🥰💖</b>\n\n"
-        "<b>⁉️ FACING PROBLEMS, USE: /help</b>"
+        f"<b><i>👋 Hello {message.from_user.mention},</i></b>\n\n"
+        "<b><i>⚠️ You need to join my Channel/Group to use me!</i></b>\n\n"
+        "<b><i>👉 ❤️ Kindly Please join Channel to access the content... ✨🥰💖</i></b>\n\n"
+        "<b><i>⁉️ FACING PROBLEMS, USE: /help</i></b>"
     )
     await message.reply(text=sexy_force_msg, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=ParseMode.HTML, quote=True, disable_web_page_preview=True)
 
 
 @Bot.on_message(filters.command('help') & filters.private)
 async def help_command(client: Client, message: Message):
+    # IMAGE 5 FIX: All text segments structural layout converted into bold italic execution
     help_text = (
-        f"⁉️ <b>Hello {message.from_user.mention} ~</b>\n\n"
-        "⚠️ ⇨ <b>I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels ❤️✨</b>\n\n"
-        "📢 ⇨ <b>In order to get the files you have to join all the mentioned channels that I provide you to join 💖 You cannot access or get the files unless you joined all channels 🥰</b>\n\n"
-        "🚀 ⇨ <b>So kindly join the Mentioned Channels to get your Files instantly! ❤️🌟</b>"
+        f"<b><i>⁉️ Hello {message.from_user.mention} ~</i></b>\n\n"
+        "<b><i>⚠️ ⇨ I am a private file sharing bot, meant to provide files and necessary stuff through special link for specific channels ❤️✨</i></b>\n\n"
+        "<b><i>📢 ⇨ In order to get the files you have to join all the mentioned channels that I provide you to join 💖 You cannot access or get the files unless you joined all channels 🥰</i></b>\n\n"
+        "<b><i>🚀 ⇨ So kindly join the Mentioned Channels to get your Files instantly! ❤️🌟</i></b>"
     )
     await message.reply_text(text=help_text, parse_mode=ParseMode.HTML, quote=True)
 
@@ -180,9 +187,10 @@ async def delete_files(messages, client, k, file_token):
         try: await client.delete_messages(chat_id=msg.chat.id, message_ids=[msg.id])
         except Exception as e: print(f"Delete failed: {e}")
             
+    # IMAGE 5 RECYCLE NOTICE FIX: Converted notice lines to bold italic formatting structure
     recycle_text = (
-        "<b>Previous Message was Deleted 🗑️</b>\n\n"
-        "<b>If you want to get the files again, then click: [ ♻️ Click Here ] button below else close this message ❤️✨</b>"
+        "<b><i>Previous Message was Deleted 🗑️</i></b>\n\n"
+        "<b><i>If you want to get the files again, then click: [ ♻️ Click Here ] button below else close this message ❤️✨</i></b>"
     )
     
     recycle_buttons = []
@@ -216,18 +224,15 @@ async def send_text(client: Bot, message: Message):
         
         for chat_id in query:
             try:
-                # DYNAMIC BROADCAST ITALIC FORCING ENGINE
                 if broadcast_msg.text:
-                    # Pure text message code path logic
                     await client.send_message(
                         chat_id=chat_id,
-                        text=f"<i>{broadcast_msg.text.html if broadcast_msg.text.html else broadcast_msg.text}</i>",
+                        text=f"<b><i>{broadcast_msg.text.html if broadcast_msg.text.html else broadcast_msg.text}</i></b>",
                         parse_mode=ParseMode.HTML,
                         reply_markup=broadcast_msg.reply_markup
                     )
                 else:
-                    # Media templates (Photo/Video/Files captions fallback conversion)
-                    caption = f"<i>{broadcast_msg.caption.html if broadcast_msg.caption else ''}</i>"
+                    caption = f"<b><i>{broadcast_msg.caption.html if broadcast_msg.caption else ''}</i></b>"
                     await broadcast_msg.copy(chat_id=chat_id, caption=caption, parse_mode=ParseMode.HTML)
                 successful += 1
             except FloodWait as e:
@@ -235,12 +240,12 @@ async def send_text(client: Bot, message: Message):
                 if broadcast_msg.text:
                     await client.send_message(
                         chat_id=chat_id,
-                        text=f"<i>{broadcast_msg.text.html if broadcast_msg.text.html else broadcast_msg.text}</i>",
+                        text=f"<b><i>{broadcast_msg.text.html if broadcast_msg.text.html else broadcast_msg.text}</i></b>",
                         parse_mode=ParseMode.HTML,
                         reply_markup=broadcast_msg.reply_markup
                     )
                 else:
-                    caption = f"<i>{broadcast_msg.caption.html if broadcast_msg.caption else ''}</i>"
+                    caption = f"<b><i>{broadcast_msg.caption.html if broadcast_msg.caption else ''}</i></b>"
                     await broadcast_msg.copy(chat_id=chat_id, caption=caption, parse_mode=ParseMode.HTML)
                 successful += 1
             except UserIsBlocked:
